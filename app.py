@@ -411,7 +411,7 @@ def create_plot(df, title):
         name=team1_column,
         orientation='h',
         marker=dict(color='blue'),
-        text=[f"<b>{x}</b>" for x in plot_df[team1_column]],  # Make text bold
+        text=[f"<b>{int(x)}</b>" for x in plot_df[team1_column]],  # Make text bold
         textposition='outside',  # Position labels outside the bars
         textfont=dict(color='black'),  # Set text color to black
         hoverinfo='x+text'  # Hover information
@@ -423,7 +423,7 @@ def create_plot(df, title):
         name=team2_column,
         orientation='h',
         marker=dict(color='red'),
-        text=[f"<b>{x}</b>" for x in plot_df[team2_column]],  # Make text bold
+        text=[f"<b>{int(x)}</b>" for x in plot_df[team2_column]],  # Make text bold
         textposition='outside',  # Position labels outside the bars
         textfont=dict(color='black'),  # Set text color to black
         hoverinfo='x+text'  # Hover information 
@@ -473,6 +473,7 @@ df2 = df2[['match_id_new','team_name','team_score','goal_attempt','shot_ON','sho
 
 
 match_id = df2['match_id_new'].unique()
+st.sidebar.header("Select match ID")
 item = st.sidebar.selectbox("Select match ID", match_id)
 
 match_id_filtered = df2[df2['match_id_new'] == item]
@@ -480,7 +481,8 @@ match_id_filtered = df2[df2['match_id_new'] == item]
 
 # st.write(match_id_filtered)
 
-fig1 = create_plot(match_id_filtered, f'{match_id_filtered.columns[1]} vs {match_id_filtered.columns[2]} ')
+# fig1 = create_plot(match_id_filtered, f'match_id_filtered["team_name"].iloc[0]} vs {match_id_filtered["team_name"].iloc[1]} ')
+fig1 = create_plot(match_id_filtered, f'{match_id_filtered["team_name"].iloc[0]} vs {match_id_filtered["team_name"].iloc[1]}')
 
 
 df = fetch_data('PLAYER_STATS')
@@ -498,7 +500,7 @@ df_team1_filtered = df[df['Team'] == team1]
 df_team2_filtered = df[df['Team'] == team2]
 
 # Sidebar for Position Selection
-st.sidebar.header("Select Position")
+# st.sidebar.header("Select Position")
 position_options_team1 = df_team1_filtered['POS'].unique()
 position_options_team2 = df_team2_filtered['POS'].unique()
 
@@ -535,6 +537,7 @@ df_position_team2 = df_position_team2[columns_to_use]
 
 def create_radar_chart(df1, df2, player1, player2):
     metrics = df1.columns[1:].tolist()  # Exclude 'Player' column
+    metrics_bold = [f"<b>{metric}</b>" for metric in metrics] 
     player1_data = df[df['Player'] == player1].iloc[:, 4:10].sum()
     player2_data = df[df['Player'] == player2].iloc[:, 4:10].sum()
 
@@ -557,18 +560,26 @@ def create_radar_chart(df1, df2, player1, player2):
 
     trace1 = go.Scatterpolar(
         r=player1_data,
-        theta=metrics,
+        theta=metrics_bold,
         fill='toself',
         name=player1,
-        marker=dict(color='blue')
+        marker=dict(color='blue'),
+        text=[f"<b>{val}</b>" for val in player1_data],  # Make values bold
+        textposition='top center',                       # Position text at the top center
+        mode='lines+markers+text',                       # Show lines, markers, and text
+        textfont=dict(size=12, color='black')            # Set text size and color
     )
 
     trace2 = go.Scatterpolar(
         r=player2_data,
-        theta=metrics,
+        theta=metrics_bold,
         fill='toself',
         name=player2,
-        marker=dict(color='red')
+        marker=dict(color='red'),
+        text=[f"<b>{val}</b>" for val in player2_data],  # Make values bold
+        textposition='top center',                       # Position text at the top center
+        mode='lines+markers+text',                       # Show lines, markers, and text
+        textfont=dict(size=12, color='black')            # Set text size and color
     )
 
     layout = go.Layout(
@@ -584,6 +595,61 @@ def create_radar_chart(df1, df2, player1, player2):
 
     fig = go.Figure(data=[trace1, trace2], layout=layout)
     return fig
+import plotly.graph_objs as go
+
+# def create_radar_chart(df1, df2, player1, player2):
+#     # Prepare the metrics and data for each player
+#     metrics = df1.columns[1:].tolist()  # Exclude 'Player' column
+
+#     player1_data = df1[df1['Player'] == player1].iloc[:, 4:10].sum()
+#     player2_data = df2[df2['Player'] == player2].iloc[:, 4:10].sum()
+
+#     player1_data = player1_data.iloc[:].tolist()
+#     player2_data = player2_data.iloc[:].tolist()
+
+#     # Create the radar chart traces
+#     trace1 = go.Scatterpolar(
+#         r=player1_data,
+#         theta=metrics,  # Use metrics directly
+#         fill='toself',
+#         name=player1,
+#         marker=dict(color='blue'),
+#         text=[f"<b>{val}</b>" for val in player1_data],  # Make values bold
+#         textposition='top center',                       # Position text at the top center
+#         mode='lines+markers+text',                     # Show lines, markers, and text
+#         textfont=dict(size=12, color='black')            # Set text size and color
+#     )
+
+#     trace2 = go.Scatterpolar(
+#         r=player2_data,
+#         theta=metrics,  # Use metrics directly
+#         fill='toself',
+#         name=player2,
+#         marker=dict(color='red'),
+#         text=[f"<b>{val}</b>" for val in player2_data],  # Make values bold
+#         textposition='top center',                       # Position text at the top center
+#         mode='lines+markers+text',                       # Show lines, markers, and text
+#         textfont=dict(size=12, color='black')            # Set text size and color
+#     )
+
+#     # Define layout with bold and colored polar axis labels
+#     layout = go.Layout(
+#         polar=dict(
+#             radialaxis=dict(
+#                 visible=True,
+#                 range=[0, 10],  # Fixed range set to 10
+#                 tickfont=dict(size=14, color='black', family='Arial', weight='bold')  # Set size, color, and boldness
+#             ),
+#             angularaxis=dict(
+#                 tickfont=dict(size=14, color='black', family='Arial', weight='bold')  # Set size, color, and boldness for stat names
+#             )
+#         ),
+#         showlegend=True
+#     )
+
+#     # Create the figure with both traces
+#     fig = go.Figure(data=[trace1, trace2], layout=layout)
+#     return fig
 
 
 
@@ -599,6 +665,7 @@ stats = ['GS', 'GC', 'AS', 'SH', 'OT', 'PK', 'FC', 'FD', 'Y', '2Y', 'R']
 
 
 # Sidebar for selecting stats
+st.sidebar.header("Select Stat for Viz top 5")
 selected_stat = st.sidebar.selectbox("Select Stat", stats)
 
 # Calculate the top 5 players for the selected stat
