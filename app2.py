@@ -4,17 +4,27 @@ import streamlit as st
 import PIL
 from PIL import Image, ImageEnhance
 import seaborn as sns
-import plotly.graph_objs as go
+
+# Step 1: Load data from Google Sheets
+# document_id = '1rlP9mSfvJE73xK6Q5ddtDnk67U6D1DjVsJH-1dIXOXk'
+# sheet_name = 'All-Time-Results'  # Replace with the appropriate sheet name or index if necessary
+# url = f'https://docs.google.com/spreadsheets/d/{document_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
 
 
+
+# document_id = '1CWOu-S9NtRn49wXP_7as2sknb82Uvj5YUWy-Ot4g3wE'  # New document ID
+# sheet_name = 'matches'  # The sheet name remains the same
+
+# url = f'https://docs.google.com/spreadsheets/d/{document_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
 document_id = '1CWOu-S9NtRn49wXP_7as2sknb82Uvj5YUWy-Ot4g3wE'
 def fetch_data(sheet_name):
     url = f'https://docs.google.com/spreadsheets/d/{document_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
     return pd.read_csv(url, index_col=0)
 
 data = fetch_data('matches')
+# data = pd.read_csv(url, index_col=0)
 
-
+# Step 4: Create the Streamlit app
 def main():
     st.title("FIFA U20 Women's World Cup ")
 
@@ -392,243 +402,7 @@ def calculate_head_to_head_totals(team_data, team1, team2):
 
     return (average_goals_scored_team1, average_goals_conceded_team1), (average_goals_scored_team2, average_goals_conceded_team2)
 
-def create_plot(df, title):
-    stats_column = 'stats'
-    team1_column = df.iloc[0, 1]  # Home team
-    team2_column = df.iloc[1, 1]  # Away team
 
-    # Create a new DataFrame for plotting
-    plot_df = pd.DataFrame({
-        stats_column: df.columns[2:],  # Extract stats from column names starting from the 3rd column
-        team1_column: df.iloc[0, 2:],  # Extract data for Home Team
-        team2_column: df.iloc[1, 2:]   # Extract data for Away Team
-    })
-
-    
-    trace1 = go.Bar(
-        y=plot_df[stats_column],
-        x=-plot_df[team1_column],  # Make x-values negative for one team
-        name=team1_column,
-        orientation='h',
-        marker=dict(color='blue'),
-        text=[f"<b>{x}</b>" for x in plot_df[team1_column]],  # Make text bold
-        textposition='outside',  # Position labels outside the bars
-        textfont=dict(color='black'),  # Set text color to black
-        hoverinfo='x+text'  # Hover information
-    )
-
-    trace2 = go.Bar(
-        y=plot_df[stats_column],
-        x=plot_df[team2_column],
-        name=team2_column,
-        orientation='h',
-        marker=dict(color='red'),
-        text=[f"<b>{x}</b>" for x in plot_df[team2_column]],  # Make text bold
-        textposition='outside',  # Position labels outside the bars
-        textfont=dict(color='black'),  # Set text color to black
-        hoverinfo='x+text'  # Hover information 
-    )
-
-
-    
-
-    layout = go.Layout(
-        title=title,
-        barmode='overlay',
-        bargap=0.1,
-        bargroupgap=0,
-        xaxis=dict(
-            title='Values',
-            showgrid=False,  # Hide x-axis grid lines
-            zeroline=True,
-            showline=True,
-            showticklabels=False  # Hide x-axis ticks
-        ),
-        yaxis=dict(
-            title='Stats',
-            showgrid=False,  # Hide y-axis grid lines
-            showline=True,
-            showticklabels=True,
-            tickfont=dict(color='black'),  # Set stats values color to black
-            categoryorder='array',  # Order by the values in the DataFrame
-            categoryarray=list(plot_df[stats_column])[::-1]  # Use the order from the DataFrame and reverse it
-        )
-    )
-
-    fig = go.Figure(data=[trace1, trace2], layout=layout)
-
-    # Adding central line for visual reference
-    fig.add_shape(type="line",
-                  x0=0, y0=-0.5, x1=0, y1=len(plot_df[stats_column])-0.5,
-                  line=dict(color="black", width=2))
-
-    return fig
-
-
-df2 = fetch_data('TEAM_STATS')
-# df_team = fetch_data('TEAM_STATS')
-
-df2 = df2[['match_id_new','team_name','team_score','goal_attempt','shot_ON','shot_OFF', 'fouls', 'Corners', 'Offsides','yellow card', 'red card','goalkeeper_saves']]
-# 'shot_BLOCK', 'shot_accuracy', 'fouls_committed','fouls_drawn','pass_attempt','pass_complete','possession'
-
-
-match_id = df2['match_id_new'].unique()
-item = st.sidebar.selectbox("Select match ID", match_id)
-
-match_id_filtered = df2[df2['match_id_new'] == item]
-
-
-# st.write(match_id_filtered)
-
-fig1 = create_plot(match_id_filtered, f'{match_id_filtered.columns[1]} vs {match_id_filtered.columns[2]} ')
-
-
-df = fetch_data('PLAYER_STATS')
-df = df.iloc[:, 5:22]
-
-
-
-st.sidebar.header("Select Teams for rader chat")
-team_options = df['Team'].unique()
-team1 = st.sidebar.selectbox("Select Team 1", team_options)
-team2 = st.sidebar.selectbox("Select Team 2", team_options)
-
-# Filter the DataFrame based on selected teams
-df_team1_filtered = df[df['Team'] == team1]
-df_team2_filtered = df[df['Team'] == team2]
-
-# Sidebar for Position Selection
-st.sidebar.header("Select Position")
-position_options_team1 = df_team1_filtered['POS'].unique()
-position_options_team2 = df_team2_filtered['POS'].unique()
-
-# Ensure positions are only selectable if they exist in both teams
-common_positions = list(set(position_options_team1) & set(position_options_team2))
-selected_position = st.sidebar.selectbox("Select Position", common_positions)
-
-# Further filter the DataFrame based on the selected position
-df_position_team1 = df_team1_filtered[df_team1_filtered['POS'] == selected_position]
-df_position_team2 = df_team2_filtered[df_team2_filtered['POS'] == selected_position]
-
-# Ensure players are uniquely filtered
-players_team1 = df_position_team1['Player'].unique().tolist()
-players_team2 = df_position_team2['Player'].unique().tolist()
-
-# Select players from the filtered teams
-player1 = st.sidebar.selectbox(f"Select Player from {team1}", players_team1, index=0)
-player2 = st.sidebar.selectbox(f"Select Player from {team2}", players_team2, index=1)
-
-
-
-if selected_position == 'GK':
-    columns_to_use = ['Min','GC', 'Y', 'R', 'FD']
-elif selected_position == 'FW':
-    columns_to_use = ['Min','GS', 'AS', 'SH', 'OT', 'FD']
-elif selected_position == 'MF':
-    columns_to_use = ['Min','GS', 'AS', 'SH', 'OT', 'FD', 'FC']
-elif selected_position == 'DF':
-    columns_to_use = ['Min','GS', 'AS', 'OT', 'FD', 'FC']
-
-# # Filter the DataFrame to include only the relevant columns
-df_position_team1 = df_position_team1[columns_to_use]
-df_position_team2 = df_position_team2[columns_to_use]
-
-def create_radar_chart(df1, df2, player1, player2):
-    metrics = df1.columns[1:].tolist()  # Exclude 'Player' column
-    player1_data = df[df['Player'] == player1].iloc[:, 4:10].sum()
-    player2_data = df[df['Player'] == player2].iloc[:, 4:10].sum()
-
-    # col1, col2 = st.columns(2)
-    
-    # with col1:
-    #     st.header(f"{player1} Stats")
-    #     st.write(player1_data)
-    
-    # with col2:
-    #     st.header(f"{player2} Stats")
-    #     st.write(player2_data) 
-
-    player1_data = player1_data.iloc[:].tolist()
-    player2_data = player2_data.iloc[:].tolist()
-
-
-
-
-
-    trace1 = go.Scatterpolar(
-        r=player1_data,
-        theta=metrics,
-        fill='toself',
-        name=player1,
-        marker=dict(color='blue')
-    )
-
-    trace2 = go.Scatterpolar(
-        r=player2_data,
-        theta=metrics,
-        fill='toself',
-        name=player2,
-        marker=dict(color='red')
-    )
-
-    layout = go.Layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 10]  # Fixed range set to 10
-            )
-        ),
-        showlegend=True
-    )
-
-
-    fig = go.Figure(data=[trace1, trace2], layout=layout)
-    return fig
-
-
-
-
-
-
-df_stats = df.iloc[:,3:22]
-df_stats = df_stats.groupby('Player').sum(numeric_only=True).reset_index()
-
-
-stats = ['GS', 'GC', 'AS', 'SH', 'OT', 'PK', 'FC', 'FD', 'Y', '2Y', 'R']
-
-
-
-# Sidebar for selecting stats
-selected_stat = st.sidebar.selectbox("Select Stat", stats)
-
-# Calculate the top 5 players for the selected stat
-df_top5 = df_stats.sort_values(by=selected_stat, ascending=False).head(5)
-
-# Plotting the bar chart
-fig, ax = plt.subplots(figsize=(8, 5))
-ax.bar(df_top5['Player'], df_top5[selected_stat], color=['blue', 'green', 'red', 'orange', 'purple'])
-ax.set_title(f'Top 5 Players by {selected_stat}')
-ax.set_xlabel('Player')
-ax.set_ylabel(selected_stat)
-ax.set_xticklabels(df_top5['Player'], rotation=45)
-
-# Display the plot in Streamlit
-
-
-
-# # Step 11: Run the app
+# Step 11: Run the app
 if __name__ == "__main__":
     main()
-    st.title("Match Day Team Stats")
-    st.plotly_chart(fig1)
-    st.title("Player Stats Visualization")
-    st.pyplot(fig)
-    if team1 != team2:
-        if player1 and player2:
-            # Create and display radar chart
-            # merged_df = pd.concat([df_position_team1, df_position_team2], ignore_index=True)
-            # st.dataframe(merged_df, use_container_width=True)
-            fig = create_radar_chart(df_position_team1, df_position_team2, player1, player2)
-            st.plotly_chart(fig)
-    else:
-        st.sidebar.write("Please select two different teams.")
