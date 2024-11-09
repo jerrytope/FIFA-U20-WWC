@@ -15,7 +15,7 @@ import plotly.graph_objs as go
 # data = fetch_data('matches')
 
 
-document_id = '15xny84NCVAVwU7lrrNKz3ghirFaJ2VLU'
+document_id = '1CWOu-S9NtRn49wXP_7as2sknb82Uvj5YUWy-Ot4g3wE'
 
 def fetch_data(sheet_name):
     url = f'https://docs.google.com/spreadsheets/d/{document_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
